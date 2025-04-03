@@ -18,6 +18,13 @@ const OMRForm = ({ onSubmit }) => {
       alert("Please enter your Roll Number.");
       return;
     }
+    
+    const answeredCount = answers.filter(answer => answer !== null).length;
+    if (answeredCount < totalQuestions / 2) {
+      alert("Please answer at least 50% of the questions.");
+      return;
+    }
+    
     console.log("Submitted Data:", { rollNumber, answers });
     onSubmit({ rollNumber, answers });
   };
@@ -86,4 +93,5 @@ const OMRForm = ({ onSubmit }) => {
 };
 
 export default OMRForm;
+
 
