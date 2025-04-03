@@ -6,9 +6,11 @@ const OMRForm = ({ onSubmit }) => {
   const [answers, setAnswers] = useState(Array(totalQuestions).fill(null));
 
   const handleOptionSelect = (qIndex, option) => {
-    const updatedAnswers = [...answers];
-    updatedAnswers[qIndex] = option;
-    setAnswers(updatedAnswers);
+    setAnswers((prevAnswers) => {
+      const updatedAnswers = [...prevAnswers];
+      updatedAnswers[qIndex] = option;
+      return updatedAnswers;
+    });
   };
 
   const handleSubmit = () => {
@@ -49,7 +51,7 @@ const OMRForm = ({ onSubmit }) => {
                   <span className="font-bold text-red-600 mr-2">
                     {String(qIndex + 1).padStart(3, "0")}
                   </span>
-                  {["A", "B", "C", "D"].map((option) => (
+                  {"ABCD".split("").map((option) => (
                     <label key={option} className="flex items-center mx-2">
                       <input
                         type="radio"
@@ -59,7 +61,7 @@ const OMRForm = ({ onSubmit }) => {
                         checked={answers[qIndex] === option}
                         onChange={() => handleOptionSelect(qIndex, option)}
                       />
-                      <span className="w-8 h-8 flex items-center justify-center border border-red-500 rounded-full cursor-pointer hover:bg-red-200 transition-all">
+                      <span className={`w-8 h-8 flex items-center justify-center border border-red-500 rounded-full cursor-pointer hover:bg-red-200 transition-all ${answers[qIndex] === option ? 'bg-red-500 text-white' : ''}`}>
                         {option}
                       </span>
                     </label>
@@ -84,3 +86,4 @@ const OMRForm = ({ onSubmit }) => {
 };
 
 export default OMRForm;
+
