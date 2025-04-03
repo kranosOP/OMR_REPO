@@ -1,25 +1,31 @@
 import React, { useState, useEffect } from "react";
 
 const OMRForm = ({ onSubmit }) => {
-  const [totalQuestions, setTotalQuestions] = useState(100);
-  const [rollNumber, setRollNumber] = useState("");
-  const [answers, setAnswers] = useState(Array(totalQuestions).fill(null));
+  const [totalQuestions, setTotalQuestions] = useState(null);
+  const [rollNumber, setRollNumber] = useState(null);
+  const [answers, setAnswers] = useState([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    const savedAnswers = localStorage.getItem("omrAnswers");
-    const savedRollNumber = localStorage.getItem("omrRollNumber");
-    const savedTotalQuestions = localStorage.getItem("omrTotalQuestions");
-    
-    if (savedAnswers) setAnswers(JSON.parse(savedAnswers));
-    if (savedRollNumber) setRollNumber(savedRollNumber);
-    if (savedTotalQuestions) setTotalQuestions(Number(savedTotalQuestions));
+    const storedTotalQuestions = Number(localStorage.getItem("omrTotalQuestions"));
+    const storedRollNumber = localStorage.getItem("omrRollNumber");
+    const storedAnswers = JSON.parse(localStorage.getItem("omrAnswers"));
+
+    if (storedTotalQuestions && storedRollNumber && storedAnswers) {
+      setTotalQuestions(storedTotalQuestions);
+      setRollNumber(storedRollNumber);
+      setAnswers(storedAnswers);
+      setIsInitialized(true);
+    }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("omrAnswers", JSON.stringify(answers));
-    localStorage.setItem("omrRollNumber", rollNumber);
-    localStorage.setItem("omrTotalQuestions", totalQuestions);
-  }, [answers, rollNumber, totalQuestions]);
+    if (totalQuestions && rollNumber) {
+      localStorage.setItem("omrTotalQuestions", totalQuestions);
+      localStorage.setItem("omrRollNumber", rollNumber);
+      localStorage.setItem("omrAnswers", JSON.stringify(answers));
+    }
+  }, [totalQuestions, rollNumber, answers]);
 
   const handleOptionSelect = (qIndex, option) => {
     setAnswers((prevAnswers) => {
@@ -30,59 +36,55 @@ const OMRForm = ({ onSubmit }) => {
   };
 
   const handleSubmit = () => {
-    const answeredCount = answers.filter((ans) => ans !== null).length;
-    if (!rollNumber) {
-      alert("Please enter your Roll Number.");
-      return;
-    }
-    if (answeredCount < totalQuestions / 2) {
-      alert("At least 50% of the questions must be answered.");
+    if (!rollNumber || !totalQuestions) {
+      alert("Please enter Roll Number and Number of Questions.");
       return;
     }
     console.log("Submitted Data:", { rollNumber, answers });
     onSubmit({ rollNumber, answers });
   };
 
+  if (!isInitialized) {
+    return (
+      <div className="container mx-auto p-6 text-center">
+        <h2 className="text-2xl font-bold mb-4">Enter Details</h2>
+        <input
+          type="text"
+          className="block w-1/2 mx-auto p-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+          placeholder="Enter Roll Number"
+          onChange={(e) => setRollNumber(e.target.value)}
+        />
+        <input
+          type="number"
+          className="block w-1/2 mx-auto p-2 border rounded-lg mt-4 focus:ring-2 focus:ring-red-500"
+          placeholder="Enter Number of Questions"
+          onChange={(e) => {
+            const num = Number(e.target.value);
+            setTotalQuestions(num);
+            setAnswers(Array(num).fill(null));
+          }}
+        />
+        <button
+          className="mt-4 px-6 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600"
+          onClick={() => setIsInitialized(true)}
+        >
+          Start
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6">
       <h2 className="text-center text-2xl font-bold mb-6">OMR Answer Sheet</h2>
-      {/* Roll Number Input */}
-      <div className="text-center mb-6">
-        <label htmlFor="rollNumber" className="font-semibold text-lg">
-          Roll Number:
-        </label>
-        <input
-          type="text"
-          className="block w-1/2 mx-auto p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-          id="rollNumber"
-          value={rollNumber}
-          onChange={(e) => setRollNumber(e.target.value)}
-          placeholder="Enter Roll Number"
-        />
-      </div>
-      <div className="text-center mb-6">
-        <label htmlFor="totalQuestions" className="font-semibold text-lg">
-          Number of Questions:
-        </label>
-        <input
-          type="number"
-          className="block w-1/2 mx-auto p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-          id="totalQuestions"
-          value={totalQuestions}
-          onChange={(e) => setTotalQuestions(Number(e.target.value))}
-          min="1"
-          max="200"
-        />
-      </div>
-      {/* OMR Grid */}
       <div className="grid grid-cols-4 gap-4 border border-red-500 p-4 rounded-lg">
         {[...Array(4)].map((_, colIndex) => (
           <div key={colIndex} className="border-r border-red-500 last:border-r-0">
             {Array.from({ length: totalQuestions / 4 }).map((_, rowIndex) => {
               const qIndex = colIndex * (totalQuestions / 4) + rowIndex;
-              const bgColor = Math.floor(qIndex / 5) % 2 === 0 ? "bg-red-100" : "bg-white";
+              if (qIndex >= totalQuestions) return null;
               return (
-                <div key={qIndex} className={`flex items-center p-2 ${bgColor}`}>
+                <div key={qIndex} className="flex items-center p-2">
                   <span className="font-bold text-red-600 mr-4 w-10 text-right">
                     {String(qIndex + 1).padStart(3, "0")}
                   </span>
@@ -107,10 +109,9 @@ const OMRForm = ({ onSubmit }) => {
           </div>
         ))}
       </div>
-      {/* Submit Button */}
       <div className="text-center mt-6">
         <button
-          className="px-6 py-2 bg-red-500 text-white font-semibold rounded-lg shadow hover:bg-red-600 transition-all"
+          className="px-6 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600"
           onClick={handleSubmit}
         >
           Submit
@@ -121,5 +122,6 @@ const OMRForm = ({ onSubmit }) => {
 };
 
 export default OMRForm;
+
 
 
