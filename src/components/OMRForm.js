@@ -24,7 +24,6 @@ const OMRForm = ({ onSubmit }) => {
   return (
     <div className="container mt-4">
       <h2 className="text-center mb-4">OMR Answer Sheet</h2>
-
       {/* Roll Number Input */}
       <div className="form-group text-center">
         <label htmlFor="rollNumber" className="fw-bold">Roll Number:</label>
@@ -37,17 +36,17 @@ const OMRForm = ({ onSubmit }) => {
           placeholder="Enter Roll Number"
         />
       </div>
-
       {/* OMR Grid */}
       <div className="row border border-danger p-3 mt-3">
         {[...Array(4)].map((_, colIndex) => (
           <div key={colIndex} className="col-md-3 border-end border-danger">
             {Array.from({ length: 25 }).map((_, rowIndex) => {
               const qIndex = colIndex * 25 + rowIndex;
+              const bgColor = Math.floor(qIndex / 5) % 2 === 0 ? "bg-danger bg-opacity-25" : "bg-white";
               return (
                 <div
                   key={qIndex}
-                  className={`d-flex align-items-center p-2 ${rowIndex % 2 === 0 ? "bg-light" : "bg-danger bg-opacity-10"}`}
+                  className={`d-flex align-items-center p-2 ${bgColor}`}
                 >
                   <span className="fw-bold text-danger me-2">{String(qIndex + 1).padStart(3, "0")}</span>
                   {["A", "B", "C", "D"].map((option) => (
@@ -69,7 +68,6 @@ const OMRForm = ({ onSubmit }) => {
           </div>
         ))}
       </div>
-
       {/* Submit Button */}
       <div className="text-center mt-4">
         <button className="btn btn-danger" onClick={handleSubmit}>
@@ -81,5 +79,8 @@ const OMRForm = ({ onSubmit }) => {
 };
 
 export default OMRForm;
+
+
+
 
 
