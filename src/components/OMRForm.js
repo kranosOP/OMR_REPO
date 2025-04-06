@@ -51,7 +51,7 @@ const OMRForm = ({ onSubmit }) => {
               return (
                 <div
                   key={qIndex}
-                  className={flex items-center p-2 ${bgColor}}
+                  className={`flex items-center p-2 ${bgColor}`}
                 >
                   <span className="font-bold text-red-600 mr-2 w-12">
                     {String(qIndex + 1).padStart(3, "0")}
@@ -92,6 +92,7 @@ const OMRForm = ({ onSubmit }) => {
 };
 
 export default OMRForm;
+
 
 
 
