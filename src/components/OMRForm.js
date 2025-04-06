@@ -16,6 +16,33 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
     return saved ? JSON.parse(saved) : Array(totalQuestions).fill(null);
   });
 
+  // Calculate the optimal number of columns based on screen width
+  const [columns, setColumns] = useState(4);
+
+  // Listen for window resize to adjust columns
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) { // Small mobile
+        setColumns(1);
+      } else if (window.innerWidth < 768) { // Mobile
+        setColumns(2);
+      } else if (window.innerWidth < 1024) { // Tablet
+        setColumns(3);
+      } else { // Desktop
+        setColumns(4);
+      }
+    };
+
+    // Set initial value
+    handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+    
+    // Clean up
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Save total questions to local storage whenever it changes
   useEffect(() => {
     localStorage.setItem("omrTotalQuestions", totalQuestions.toString());
@@ -73,17 +100,17 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
   };
 
   // Calculate the number of questions per column
-  const questionsPerColumn = Math.ceil(totalQuestions / 4);
+  const questionsPerColumn = Math.ceil(totalQuestions / columns);
   
   return (
-    <div className="container mx-auto p-6">
-      <h2 className="text-center text-2xl font-bold mb-6">OMR Answer Sheet</h2>
+    <div className="container mx-auto p-2 sm:p-4 md:p-6">
+      <h2 className="text-center text-xl sm:text-2xl font-bold mb-4 sm:mb-6">OMR Answer Sheet</h2>
       
       {/* Configuration Section */}
-      <div className="flex flex-wrap gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-4 mb-4 sm:mb-6">
         {/* Roll Number Input */}
-        <div className="flex-1">
-          <label htmlFor="rollNumber" className="font-semibold text-lg block mb-2">
+        <div className="w-full sm:flex-1">
+          <label htmlFor="rollNumber" className="font-semibold text-base sm:text-lg block mb-1 sm:mb-2">
             Roll Number:
           </label>
           <input
@@ -97,8 +124,8 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
         </div>
         
         {/* Question Count Input */}
-        <div className="flex-1">
-          <label htmlFor="questionCount" className="font-semibold text-lg block mb-2">
+        <div className="w-full sm:flex-1">
+          <label htmlFor="questionCount" className="font-semibold text-base sm:text-lg block mb-1 sm:mb-2">
             Number of Questions:
           </label>
           <input
@@ -122,8 +149,8 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
       {/* Progress indicator */}
       <div className="mb-4">
         <div className="flex justify-between mb-1">
-          <span>Progress: {answers.filter(a => a !== null).length}/{totalQuestions} questions answered</span>
-          <span>{Math.round((answers.filter(a => a !== null).length / totalQuestions) * 100)}%</span>
+          <span className="text-sm sm:text-base">Progress: {answers.filter(a => a !== null).length}/{totalQuestions}</span>
+          <span className="text-sm sm:text-base">{Math.round((answers.filter(a => a !== null).length / totalQuestions) * 100)}%</span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2.5">
           <div 
@@ -134,9 +161,9 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
       </div>
       
       {/* OMR Grid */}
-      <div className="grid grid-cols-4 gap-4 border border-red-500 p-4 rounded-lg">
-        {[...Array(4)].map((_, colIndex) => (
-          <div key={colIndex} className="border-r border-red-500 last:border-r-0">
+      <div className={`grid grid-cols-1 sm:grid-cols-${Math.min(columns, 2)} lg:grid-cols-${columns} gap-2 sm:gap-4 border border-red-500 p-2 sm:p-4 rounded-lg`}>
+        {[...Array(columns)].map((_, colIndex) => (
+          <div key={colIndex} className="border-b sm:border-b-0 sm:border-r border-red-500 last:border-b-0 sm:last:border-r-0 pb-2 sm:pb-0">
             {Array.from({ length: questionsPerColumn }).map((_, rowIndex) => {
               const qIndex = colIndex * questionsPerColumn + rowIndex;
               
@@ -149,26 +176,28 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
               return (
                 <div
                   key={qIndex}
-                  className={`flex items-center p-2 ${bgColor}`}
+                  className={`flex items-center p-1 sm:p-2 ${bgColor}`}
                 >
-                  <span className="font-bold text-red-600 mr-2 w-12">
+                  <span className="font-bold text-red-600 mr-1 sm:mr-2 w-8 sm:w-12 text-xs sm:text-base">
                     {String(qIndex + 1).padStart(3, "0")}
                   </span>
-                  {["A", "B", "C", "D"].map((option) => (
-                    <div
-                      key={option}
-                      className="mx-1"
-                      onClick={() => handleOptionSelect(qIndex, option)}
-                    >
-                      <span
-                        className={`w-8 h-8 flex items-center justify-center border rounded-full cursor-pointer select-none
-                          ${answers[qIndex] === option ? "bg-red-500 text-white" : "border-red-500 hover:bg-red-200"}
-                        `}
+                  <div className="flex flex-1 justify-around">
+                    {["A", "B", "C", "D"].map((option) => (
+                      <div
+                        key={option}
+                        className="mx-0.5 sm:mx-1"
+                        onClick={() => handleOptionSelect(qIndex, option)}
                       >
-                        {option}
-                      </span>
-                    </div>
-                  ))}
+                        <span
+                          className={`w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center border rounded-full cursor-pointer select-none text-xs sm:text-base
+                            ${answers[qIndex] === option ? "bg-red-500 text-white" : "border-red-500 hover:bg-red-200"}
+                          `}
+                        >
+                          {option}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               );
             })}
@@ -177,15 +206,15 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
       </div>
       
       {/* Button Group */}
-      <div className="flex justify-center gap-4 mt-6">
+      <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mt-4 sm:mt-6">
         <button
-          className="px-6 py-2 bg-red-500 text-white font-semibold rounded-lg shadow hover:bg-red-600 transition-all"
+          className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-500 text-white font-semibold rounded-lg shadow hover:bg-red-600 transition-all text-sm sm:text-base"
           onClick={handleSubmit}
         >
           Submit
         </button>
         <button
-          className="px-6 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow hover:bg-gray-300 transition-all"
+          className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow hover:bg-gray-300 transition-all text-sm sm:text-base"
           onClick={handleReset}
         >
           Reset Answers
