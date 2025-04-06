@@ -16,58 +16,61 @@ const OMRForm = ({ onSubmit }) => {
       alert("Please enter your Roll Number.");
       return;
     }
+    console.log("Submitted Data:", { rollNumber, answers });
     onSubmit({ rollNumber, answers });
   };
 
   return (
-    <div className="max-w-screen-xl mx-auto p-4">
-      <h2 className="text-center text-3xl font-bold mb-6">OMR Answer Sheet</h2>
+    <div className="container mx-auto p-6">
+      <h2 className="text-center text-2xl font-bold mb-6">OMR Answer Sheet</h2>
 
       {/* Roll Number Input */}
       <div className="text-center mb-6">
+        <label htmlFor="rollNumber" className="font-semibold text-lg block mb-2">
+          Roll Number:
+        </label>
         <input
           type="text"
-          placeholder="Enter Roll Number"
-          className="border border-gray-400 px-4 py-2 rounded-md w-full sm:w-1/2 md:w-1/3 text-center"
+          className="block w-1/2 mx-auto p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+          id="rollNumber"
           value={rollNumber}
           onChange={(e) => setRollNumber(e.target.value)}
+          placeholder="Enter Roll Number"
         />
       </div>
 
-      {/* OMR Grid with 4 Columns */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, col) => (
-          <div key={col} className="space-y-1">
-            {Array.from({ length: 25 }).map((_, row) => {
-              const qIndex = col * 25 + row;
-              const isStriped = Math.floor(qIndex / 5) % 2 === 0;
+      {/* OMR Grid */}
+      <div className="grid grid-cols-4 gap-4 border border-red-500 p-4 rounded-lg">
+        {[...Array(4)].map((_, colIndex) => (
+          <div key={colIndex} className="border-r border-red-500 last:border-r-0">
+            {Array.from({ length: 25 }).map((_, rowIndex) => {
+              const qIndex = colIndex * 25 + rowIndex;
+              const bgColor =
+                Math.floor(qIndex / 5) % 2 === 0 ? "bg-red-100" : "bg-white";
+
               return (
                 <div
                   key={qIndex}
-                  className={`flex items-center justify-between px-2 py-1 rounded-md text-sm ${
-                    isStriped ? "bg-gray-100" : "bg-white"
-                  }`}
+                  className={flex items-center p-2 ${bgColor}}
                 >
-                  <span className="font-bold w-10 text-right">
+                  <span className="font-bold text-red-600 mr-2 w-12">
                     {String(qIndex + 1).padStart(3, "0")}
                   </span>
-                  <div className="flex gap-1 ml-2">
-                    {["A", "B", "C", "D"].map((opt) => (
-                      <button
-                        key={opt}
-                        onClick={() => handleOptionSelect(qIndex, opt)}
-                        className={`w-6 h-6 rounded-full border border-gray-400 text-xs
-                          flex items-center justify-center
-                          ${
-                            answers[qIndex] === opt
-                              ? "bg-blue-500 text-white"
-                              : "hover:bg-blue-200"
-                          }`}
+                  {["A", "B", "C", "D"].map((option) => (
+                    <div
+                      key={option}
+                      className="mx-1"
+                      onClick={() => handleOptionSelect(qIndex, option)}
+                    >
+                      <span
+                        className={`w-8 h-8 flex items-center justify-center border rounded-full cursor-pointer select-none
+                          ${answers[qIndex] === option ? "bg-red-500 text-white" : "border-red-500 hover:bg-red-200"}
+                        `}
                       >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
+                        {option}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               );
             })}
@@ -78,7 +81,7 @@ const OMRForm = ({ onSubmit }) => {
       {/* Submit Button */}
       <div className="text-center mt-6">
         <button
-          className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-md font-semibold"
+          className="px-6 py-2 bg-red-500 text-white font-semibold rounded-lg shadow hover:bg-red-600 transition-all"
           onClick={handleSubmit}
         >
           Submit
