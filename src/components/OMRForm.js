@@ -1,119 +1,93 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
-const OMRForm = () => {
+const OMRForm = ({ onSubmit }) => {
+  const totalQuestions = 100;
   const [rollNumber, setRollNumber] = useState("");
-  const [numQuestions, setNumQuestions] = useState(0);
-  const [answers, setAnswers] = useState({});
-  const [submitted, setSubmitted] = useState(false);
+  const [answers, setAnswers] = useState(Array(totalQuestions).fill(null));
 
-  // Load saved answers from localStorage if present
-  useEffect(() => {
-    const savedData = localStorage.getItem("omr-session");
-    if (savedData) {
-      const { roll, numQ, answers } = JSON.parse(savedData);
-      setRollNumber(roll);
-      setNumQuestions(numQ);
-      setAnswers(answers);
-      setSubmitted(true);
-    }
-  }, []);
-
-  const handleAnswerChange = (qNo, option) => {
-    const updatedAnswers = { ...answers, [qNo]: option };
+  const handleOptionSelect = (qIndex, option) => {
+    const updatedAnswers = [...answers];
+    updatedAnswers[qIndex] = option;
     setAnswers(updatedAnswers);
-    localStorage.setItem(
-      "omr-session",
-      JSON.stringify({ roll: rollNumber, numQ: numQuestions, answers: updatedAnswers })
-    );
   };
 
-  const handleStart = () => {
-    if (rollNumber && numQuestions > 0) {
-      setSubmitted(true);
-    } else {
-      alert("Please enter Roll Number and select number of questions.");
+  const handleSubmit = () => {
+    if (!rollNumber) {
+      alert("Please enter your Roll Number.");
+      return;
     }
-  };
-
-  const resetSession = () => {
-    localStorage.removeItem("omr-session");
-    setRollNumber("");
-    setNumQuestions(0);
-    setAnswers({});
-    setSubmitted(false);
+    console.log("Submitted Data:", { rollNumber, answers });
+    onSubmit({ rollNumber, answers });
   };
 
   return (
-    <div className="min-h-screen p-6 bg-gray-100">
-      {!submitted ? (
-        <div className="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Start OMR Session</h2>
-          <input
-            type="text"
-            placeholder="Enter Roll Number"
-            value={rollNumber}
-            onChange={(e) => setRollNumber(e.target.value)}
-            className="w-full p-2 border rounded mb-4"
-          />
-          <select
-            value={numQuestions}
-            onChange={(e) => setNumQuestions(Number(e.target.value))}
-            className="w-full p-2 border rounded mb-4"
-          >
-            <option value="">Select Number of Questions</option>
-            {[10, 20, 30, 40, 50].map((num) => (
-              <option key={num} value={num}>
-                {num}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={handleStart}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            Start Test
-          </button>
-        </div>
-      ) : (
-        <div className="max-w-3xl mx-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold">OMR Sheet</h2>
-            <button
-              onClick={resetSession}
-              className="text-sm text-red-500 underline"
-            >
-              Reset Session
-            </button>
-          </div>
-          <p className="mb-4">Roll Number: <strong>{rollNumber}</strong></p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Array.from({ length: numQuestions }, (_, i) => i + 1).map((qNo) => (
-              <div key={qNo} className="bg-white p-4 rounded shadow">
-                <h3 className="font-medium mb-2">Question {qNo}</h3>
-                <div className="flex gap-4">
+    <div className="container mx-auto p-6">
+      <h2 className="text-center text-2xl font-bold mb-6">OMR Answer Sheet</h2>
+
+      {/* Roll Number Input */}
+      <div className="text-center mb-6">
+        <label htmlFor="rollNumber" className="font-semibold text-lg">
+          Roll Number:
+        </label>
+        <input
+          type="text"
+          className="block w-1/2 mx-auto p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+          id="rollNumber"
+          value={rollNumber}
+          onChange={(e) => setRollNumber(e.target.value)}
+          placeholder="Enter Roll Number"
+        />
+      </div>
+
+      {/* OMR Grid */}
+      <div className="grid grid-cols-4 gap-4 border border-red-500 p-4 rounded-lg">
+        {[...Array(4)].map((_, colIndex) => (
+          <div key={colIndex} className="border-r border-red-500 last:border-r-0">
+            {Array.from({ length: 25 }).map((_, rowIndex) => {
+              const qIndex = colIndex * 25 + rowIndex;
+              const bgColor = Math.floor(qIndex / 5) % 2 === 0 ? "bg-red-100" : "bg-white";
+              return (
+                <div key={qIndex} className={`flex items-center p-2 ${bgColor}`}>
+                  <span className="font-bold text-red-600 mr-2">
+                    {String(qIndex + 1).padStart(3, "0")}
+                  </span>
                   {["A", "B", "C", "D"].map((option) => (
-                    <label key={option} className="flex items-center gap-1">
+                    <label key={option} className="flex items-center mx-2">
                       <input
                         type="radio"
-                        name={`q${qNo}`}
+                        name={`q${qIndex}`}
+                        className="hidden"
                         value={option}
-                        checked={answers[qNo] === option}
-                        onChange={() => handleAnswerChange(qNo, option)}
+                        checked={answers[qIndex] === option}
+                        onChange={() => handleOptionSelect(qIndex, option)}
                       />
-                      {option}
+                      <span className="w-8 h-8 flex items-center justify-center border border-red-500 rounded-full cursor-pointer hover:bg-red-200 transition-all">
+                        {option}
+                      </span>
                     </label>
                   ))}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-        </div>
-      )}
+        ))}
+      </div>
+
+      {/* Submit Button */}
+      <div className="text-center mt-6">
+        <button
+          className="px-6 py-2 bg-red-500 text-white font-semibold rounded-lg shadow hover:bg-red-600 transition-all"
+          onClick={handleSubmit}
+        >
+          Submit
+        </button>
+      </div>
     </div>
   );
 };
 
 export default OMRForm;
+
 
 
 
