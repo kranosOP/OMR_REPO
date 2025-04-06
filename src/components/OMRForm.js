@@ -1,10 +1,36 @@
 import React, { useState, useEffect } from "react";
 
 const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
-  const [totalQuestions, setTotalQuestions] = useState(initialQuestionCount);
-  const [rollNumber, setRollNumber] = useState("");
-  const [answers, setAnswers] = useState(Array(initialQuestionCount).fill(null));
+  // Initialize state from local storage if available, otherwise use defaults
+  const [totalQuestions, setTotalQuestions] = useState(() => {
+    const saved = localStorage.getItem("omrTotalQuestions");
+    return saved ? parseInt(saved) : initialQuestionCount;
+  });
   
+  const [rollNumber, setRollNumber] = useState(() => {
+    return localStorage.getItem("omrRollNumber") || "";
+  });
+  
+  const [answers, setAnswers] = useState(() => {
+    const saved = localStorage.getItem("omrAnswers");
+    return saved ? JSON.parse(saved) : Array(totalQuestions).fill(null);
+  });
+
+  // Save total questions to local storage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("omrTotalQuestions", totalQuestions.toString());
+  }, [totalQuestions]);
+
+  // Save roll number to local storage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("omrRollNumber", rollNumber);
+  }, [rollNumber]);
+
+  // Save answers to local storage whenever they change
+  useEffect(() => {
+    localStorage.setItem("omrAnswers", JSON.stringify(answers));
+  }, [answers]);
+
   // Update answers array when totalQuestions changes
   useEffect(() => {
     setAnswers(prevAnswers => {
@@ -28,8 +54,22 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
       alert("Please enter your Roll Number.");
       return;
     }
-    console.log("Submitted Data:", { rollNumber, answers });
+    
     onSubmit({ rollNumber, answers });
+    
+    // Clear local storage after successful submission if desired
+    // Uncomment the following lines to clear data after submission
+    // localStorage.removeItem("omrTotalQuestions");
+    // localStorage.removeItem("omrRollNumber");
+    // localStorage.removeItem("omrAnswers");
+  };
+
+  const handleReset = () => {
+    if (window.confirm("Are you sure you want to reset all answers? This cannot be undone.")) {
+      setAnswers(Array(totalQuestions).fill(null));
+      // You can choose to reset roll number too if needed
+      // setRollNumber("");
+    }
   };
 
   // Calculate the number of questions per column
@@ -79,6 +119,20 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
         </div>
       </div>
       
+      {/* Progress indicator */}
+      <div className="mb-4">
+        <div className="flex justify-between mb-1">
+          <span>Progress: {answers.filter(a => a !== null).length}/{totalQuestions} questions answered</span>
+          <span>{Math.round((answers.filter(a => a !== null).length / totalQuestions) * 100)}%</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2.5">
+          <div 
+            className="bg-red-500 h-2.5 rounded-full" 
+            style={{ width: `${(answers.filter(a => a !== null).length / totalQuestions) * 100}%` }}
+          ></div>
+        </div>
+      </div>
+      
       {/* OMR Grid */}
       <div className="grid grid-cols-4 gap-4 border border-red-500 p-4 rounded-lg">
         {[...Array(4)].map((_, colIndex) => (
@@ -122,13 +176,19 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
         ))}
       </div>
       
-      {/* Submit Button */}
-      <div className="text-center mt-6">
+      {/* Button Group */}
+      <div className="flex justify-center gap-4 mt-6">
         <button
           className="px-6 py-2 bg-red-500 text-white font-semibold rounded-lg shadow hover:bg-red-600 transition-all"
           onClick={handleSubmit}
         >
           Submit
+        </button>
+        <button
+          className="px-6 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow hover:bg-gray-300 transition-all"
+          onClick={handleReset}
+        >
+          Reset Answers
         </button>
       </div>
     </div>
@@ -136,7 +196,6 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
 };
 
 export default OMRForm;
-
 
 
 
