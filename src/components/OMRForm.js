@@ -16,65 +16,59 @@ const OMRForm = ({ onSubmit }) => {
       alert("Please enter your Roll Number.");
       return;
     }
-    console.log("Submitted Data:", { rollNumber, answers });
+    console.log({ rollNumber, answers });
     onSubmit({ rollNumber, answers });
   };
 
   return (
-    <div className="max-w-screen-xl mx-auto px-4 py-6">
+    <div className="max-w-screen-xl mx-auto p-4">
       <h2 className="text-center text-2xl sm:text-3xl font-bold mb-6">
         OMR Answer Sheet
       </h2>
 
       {/* Roll Number Input */}
       <div className="text-center mb-6">
-        <label htmlFor="rollNumber" className="font-semibold text-lg block mb-2">
-          Roll Number:
-        </label>
         <input
           type="text"
-          className="block w-full sm:w-2/3 md:w-1/2 mx-auto p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-          id="rollNumber"
+          placeholder="Enter Roll Number"
+          className="border border-pink-500 px-4 py-2 rounded-md w-full sm:w-1/2 md:w-1/3 text-center focus:outline-none focus:ring-2 focus:ring-pink-500"
           value={rollNumber}
           onChange={(e) => setRollNumber(e.target.value)}
-          placeholder="Enter Roll Number"
         />
       </div>
 
       {/* OMR Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 border border-red-500 p-4 rounded-lg">
-        {[...Array(4)].map((_, colIndex) => (
-          <div key={colIndex} className="border-r border-red-500 last:border-r-0">
-            {Array.from({ length: 25 }).map((_, rowIndex) => {
-              const qIndex = colIndex * 25 + rowIndex;
-              const bgColor =
-                Math.floor(qIndex / 5) % 2 === 0 ? "bg-red-100" : "bg-white";
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 border border-pink-500 rounded-lg overflow-hidden">
+        {[...Array(4)].map((_, col) => (
+          <div key={col} className="border-r border-pink-500 last:border-r-0">
+            {Array.from({ length: 25 }).map((_, row) => {
+              const qIndex = col * 25 + row;
+              const groupBg = Math.floor(qIndex / 5) % 2 === 0 ? "bg-pink-100" : "bg-white";
 
               return (
                 <div
                   key={qIndex}
-                  className={`flex flex-wrap sm:flex-nowrap items-center p-2 ${bgColor}`}
+                  className={`flex items-center justify-between px-2 py-1 ${groupBg} border-b border-pink-200`}
                 >
-                  <span className="font-bold text-red-600 mr-2 w-12 text-sm sm:text-base">
+                  <span className="text-pink-700 font-bold w-10 text-xs sm:text-sm">
                     {String(qIndex + 1).padStart(3, "0")}
                   </span>
-                  <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-                    {["A", "B", "C", "D"].map((option) => (
-                      <div
-                        key={option}
-                        className="cursor-pointer"
-                        onClick={() => handleOptionSelect(qIndex, option)}
+                  <div className="flex gap-2">
+                    {["A", "B", "C", "D"].map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => handleOptionSelect(qIndex, opt)}
+                        className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full border text-xs sm:text-sm
+                          flex items-center justify-center 
+                          ${
+                            answers[qIndex] === opt
+                              ? "bg-pink-500 text-white border-pink-500"
+                              : "border-pink-500 text-pink-700 hover:bg-pink-200"
+                          }
+                        `}
                       >
-                        <span
-                          className={`w-8 h-8 flex items-center justify-center border rounded-full text-sm
-                            ${answers[qIndex] === option
-                              ? "bg-red-500 text-white"
-                              : "border-red-500 hover:bg-red-200"}
-                          `}
-                        >
-                          {option}
-                        </span>
-                      </div>
+                        {opt}
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -84,10 +78,10 @@ const OMRForm = ({ onSubmit }) => {
         ))}
       </div>
 
-      {/* Submit Button */}
+      {/* Submit */}
       <div className="text-center mt-6">
         <button
-          className="px-6 py-2 bg-red-500 text-white font-semibold rounded-lg shadow hover:bg-red-600 transition-all"
+          className="bg-pink-500 hover:bg-pink-600 text-white px-6 py-2 rounded-md font-semibold"
           onClick={handleSubmit}
         >
           Submit
