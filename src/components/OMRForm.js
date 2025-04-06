@@ -53,25 +53,23 @@ const OMRForm = ({ onSubmit }) => {
                   key={qIndex}
                   className={`flex items-center p-2 ${bgColor}`}
                 >
-                  <span className="font-bold text-red-600 mr-2">
+                  <span className="font-bold text-red-600 mr-2 w-12">
                     {String(qIndex + 1).padStart(3, "0")}
                   </span>
                   {["A", "B", "C", "D"].map((option) => (
-                    <label key={option} className="flex items-center mx-2">
-                      <input
-                        type="radio"
-                        name={`q${qIndex}`}
-                        className="hidden"
-                        value={option}
-                        checked={answers[qIndex] === option}
-                        onChange={() => handleOptionSelect(qIndex, option)}
-                      />
-                      <span className={`w-8 h-8 flex items-center justify-center border rounded-full cursor-pointer
-                        ${answers[qIndex] === option ? "bg-red-500 text-white" : "border-red-500 hover:bg-red-200"}
-                      `}>
+                    <div
+                      key={option}
+                      className="mx-1"
+                      onClick={() => handleOptionSelect(qIndex, option)}
+                    >
+                      <span
+                        className={`w-8 h-8 flex items-center justify-center border rounded-full cursor-pointer select-none
+                          ${answers[qIndex] === option ? "bg-red-500 text-white" : "border-red-500 hover:bg-red-200"}
+                        `}
+                      >
                         {option}
                       </span>
-                    </label>
+                    </div>
                   ))}
                 </div>
               );
