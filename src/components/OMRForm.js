@@ -16,6 +16,9 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
     return saved ? JSON.parse(saved) : Array(totalQuestions).fill(null);
   });
 
+  // Error message state
+  const [errorMessage, setErrorMessage] = useState("");
+
   // Use window size to determine layout
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
 
@@ -72,18 +75,43 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
     });
   }, [totalQuestions]);
 
+  // Clear error message when user makes changes
+  useEffect(() => {
+    if (errorMessage) {
+      setErrorMessage("");
+    }
+  }, [rollNumber, answers]);
+
   const handleOptionSelect = (qIndex, option) => {
     const updatedAnswers = [...answers];
     updatedAnswers[qIndex] = option;
     setAnswers(updatedAnswers);
   };
 
+  const getAnsweredQuestionsCount = () => {
+    return answers.filter(a => a !== null).length;
+  };
+
   const handleSubmit = () => {
-    if (!rollNumber) {
-      alert("Please enter your Roll Number.");
+    // Reset error message
+    setErrorMessage("");
+    
+    // Check if roll number is entered
+    if (!rollNumber.trim()) {
+      setErrorMessage("Please enter your Roll Number.");
       return;
     }
     
+    // Check if at least 50% of questions are answered
+    const answeredCount = getAnsweredQuestionsCount();
+    const requiredCount = Math.ceil(totalQuestions * 0.5);
+    
+    if (answeredCount < requiredCount) {
+      setErrorMessage(`Please answer at least 50% (${requiredCount}) of the questions. Currently answered: ${answeredCount}.`);
+      return;
+    }
+    
+    // If validation passes, submit the form
     onSubmit({ rollNumber, answers });
     
     // Clear local storage after successful submission if desired
@@ -96,6 +124,7 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
   const handleReset = () => {
     if (window.confirm("Are you sure you want to reset all answers? This cannot be undone.")) {
       setAnswers(Array(totalQuestions).fill(null));
+      setErrorMessage("");
       // You can choose to reset roll number too if needed
       // setRollNumber("");
     }
@@ -118,7 +147,7 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
             {["A", "B", "C", "D"].map((option) => (
               <div
                 key={option}
-                className="mx-2 sm:mx-4" // Increased spacing here (was mx-0.5 sm:mx-1)
+                className="mx-2 sm:mx-4" 
                 onClick={() => handleOptionSelect(i, option)}
               >
                 <span
@@ -156,6 +185,10 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
     
     return columnGroups;
   };
+
+  // Calculate completion percentage
+  const completionPercentage = Math.round((getAnsweredQuestionsCount() / totalQuestions) * 100);
+  const isValidCompletion = completionPercentage >= 50;
   
   return (
     <div className="container mx-auto p-2 sm:p-4 md:p-6">
@@ -170,7 +203,7 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
           </label>
           <input
             type="text"
-            className="w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            className={`w-full p-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 ${!rollNumber.trim() && errorMessage ? 'border-red-500' : ''}`}
             id="rollNumber"
             value={rollNumber}
             onChange={(e) => setRollNumber(e.target.value)}
@@ -201,16 +234,30 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
         </div>
       </div>
       
+      {/* Error message display */}
+      {errorMessage && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 relative" role="alert">
+          <span className="block sm:inline">{errorMessage}</span>
+        </div>
+      )}
+      
       {/* Progress indicator */}
       <div className="mb-4">
         <div className="flex justify-between mb-1">
-          <span className="text-sm sm:text-base">Progress: {answers.filter(a => a !== null).length}/{totalQuestions}</span>
-          <span className="text-sm sm:text-base">{Math.round((answers.filter(a => a !== null).length / totalQuestions) * 100)}%</span>
+          <span className="text-sm sm:text-base">
+            Progress: {getAnsweredQuestionsCount()}/{totalQuestions} 
+            {!isValidCompletion && completionPercentage > 0 && (
+              <span className="text-red-500 ml-2">(Need at least 50%)</span>
+            )}
+          </span>
+          <span className={`text-sm sm:text-base ${isValidCompletion ? 'text-green-600' : 'text-red-500'}`}>
+            {completionPercentage}%
+          </span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2.5">
           <div 
-            className="bg-red-500 h-2.5 rounded-full" 
-            style={{ width: `${(answers.filter(a => a !== null).length / totalQuestions) * 100}%` }}
+            className={`${isValidCompletion ? 'bg-green-500' : 'bg-red-500'} h-2.5 rounded-full`}
+            style={{ width: `${completionPercentage}%` }}
           ></div>
         </div>
       </div>
@@ -230,8 +277,10 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
       {/* Button Group */}
       <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mt-4 sm:mt-6">
         <button
-          className="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-500 text-white font-semibold rounded-lg shadow hover:bg-red-600 transition-all text-sm sm:text-base"
+          className={`w-full sm:w-auto px-4 sm:px-6 py-2 font-semibold rounded-lg shadow transition-all text-sm sm:text-base
+            ${(isValidCompletion && rollNumber.trim()) ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-red-300 text-white cursor-not-allowed'}`}
           onClick={handleSubmit}
+          disabled={!isValidCompletion || !rollNumber.trim()}
         >
           Submit
         </button>
