@@ -26,7 +26,7 @@ const OMRForm = ({ onSubmit }) => {
 
       {/* Roll Number Input */}
       <div className="text-center mb-6">
-        <label htmlFor="rollNumber" className="font-semibold text-lg">
+        <label htmlFor="rollNumber" className="font-semibold text-lg block mb-2">
           Roll Number:
         </label>
         <input
@@ -45,9 +45,14 @@ const OMRForm = ({ onSubmit }) => {
           <div key={colIndex} className="border-r border-red-500 last:border-r-0">
             {Array.from({ length: 25 }).map((_, rowIndex) => {
               const qIndex = colIndex * 25 + rowIndex;
-              const bgColor = Math.floor(qIndex / 5) % 2 === 0 ? "bg-red-100" : "bg-white";
+              const bgColor =
+                Math.floor(qIndex / 5) % 2 === 0 ? "bg-red-100" : "bg-white";
+
               return (
-                <div key={qIndex} className={`flex items-center p-2 ${bgColor}`}>
+                <div
+                  key={qIndex}
+                  className={`flex items-center p-2 ${bgColor}`}
+                >
                   <span className="font-bold text-red-600 mr-2">
                     {String(qIndex + 1).padStart(3, "0")}
                   </span>
@@ -61,7 +66,9 @@ const OMRForm = ({ onSubmit }) => {
                         checked={answers[qIndex] === option}
                         onChange={() => handleOptionSelect(qIndex, option)}
                       />
-                      <span className="w-8 h-8 flex items-center justify-center border border-red-500 rounded-full cursor-pointer hover:bg-red-200 transition-all">
+                      <span className={`w-8 h-8 flex items-center justify-center border rounded-full cursor-pointer
+                        ${answers[qIndex] === option ? "bg-red-500 text-white" : "border-red-500 hover:bg-red-200"}
+                      `}>
                         {option}
                       </span>
                     </label>
@@ -87,6 +94,7 @@ const OMRForm = ({ onSubmit }) => {
 };
 
 export default OMRForm;
+
 
 
 
