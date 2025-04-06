@@ -23,6 +23,7 @@ const OMRForm = ({ onSubmit }) => {
   return (
     <div className="container mx-auto p-6">
       <h2 className="text-center text-2xl font-bold mb-6">OMR Answer Sheet</h2>
+
       {/* Roll Number Input */}
       <div className="text-center mb-6">
         <label htmlFor="rollNumber" className="font-semibold text-lg">
@@ -37,6 +38,7 @@ const OMRForm = ({ onSubmit }) => {
           placeholder="Enter Roll Number"
         />
       </div>
+
       {/* OMR Grid */}
       <div className="grid grid-cols-4 gap-4 border border-red-500 p-4 rounded-lg">
         {[...Array(4)].map((_, colIndex) => (
@@ -45,7 +47,7 @@ const OMRForm = ({ onSubmit }) => {
               const qIndex = colIndex * 25 + rowIndex;
               const bgColor = Math.floor(qIndex / 5) % 2 === 0 ? "bg-red-100" : "bg-white";
               return (
-                <div key={qIndex} className={flex items-center p-2 ${bgColor}}>
+                <div key={qIndex} className={`flex items-center p-2 ${bgColor}`}>
                   <span className="font-bold text-red-600 mr-2">
                     {String(qIndex + 1).padStart(3, "0")}
                   </span>
@@ -53,7 +55,7 @@ const OMRForm = ({ onSubmit }) => {
                     <label key={option} className="flex items-center mx-2">
                       <input
                         type="radio"
-                        name={q${qIndex}}
+                        name={`q${qIndex}`}
                         className="hidden"
                         value={option}
                         checked={answers[qIndex] === option}
@@ -70,6 +72,7 @@ const OMRForm = ({ onSubmit }) => {
           </div>
         ))}
       </div>
+
       {/* Submit Button */}
       <div className="text-center mt-6">
         <button
@@ -84,6 +87,7 @@ const OMRForm = ({ onSubmit }) => {
 };
 
 export default OMRForm;
+
 
 
 
