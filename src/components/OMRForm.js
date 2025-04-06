@@ -16,21 +16,13 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
     return saved ? JSON.parse(saved) : Array(totalQuestions).fill(null);
   });
 
-  // Calculate the optimal number of columns based on screen width
-  const [columns, setColumns] = useState(4);
+  // Use window size to determine layout
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
 
-  // Listen for window resize to adjust columns
+  // Listen for window resize
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 640) { // Small mobile
-        setColumns(1);
-      } else if (window.innerWidth < 768) { // Mobile
-        setColumns(2);
-      } else if (window.innerWidth < 1024) { // Tablet
-        setColumns(3);
-      } else { // Desktop
-        setColumns(4);
-      }
+      setWindowWidth(window.innerWidth);
     };
 
     // Set initial value
@@ -42,6 +34,16 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
     // Clean up
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Calculate columns based on window width
+  const getColumns = () => {
+    if (windowWidth < 640) return 1;
+    if (windowWidth < 768) return 2;
+    if (windowWidth < 1024) return 3;
+    return 4;
+  };
+  
+  const columns = getColumns();
 
   // Save total questions to local storage whenever it changes
   useEffect(() => {
@@ -102,6 +104,59 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
   // Calculate the number of questions per column
   const questionsPerColumn = Math.ceil(totalQuestions / columns);
   
+  // Generate question rows
+  const renderQuestionRows = () => {
+    const rows = [];
+    for (let i = 0; i < totalQuestions; i++) {
+      const bgColor = Math.floor(i / 5) % 2 === 0 ? "bg-red-100" : "bg-white";
+      rows.push(
+        <div key={i} className={`flex items-center p-1 sm:p-2 ${bgColor}`}>
+          <span className="font-bold text-red-600 mr-1 sm:mr-2 w-8 sm:w-12 text-xs sm:text-base">
+            {String(i + 1).padStart(3, "0")}
+          </span>
+          <div className="flex flex-1 justify-around">
+            {["A", "B", "C", "D"].map((option) => (
+              <div
+                key={option}
+                className="mx-0.5 sm:mx-1"
+                onClick={() => handleOptionSelect(i, option)}
+              >
+                <span
+                  className={`w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center border rounded-full cursor-pointer select-none text-xs sm:text-base
+                    ${answers[i] === option ? "bg-red-500 text-white" : "border-red-500 hover:bg-red-200"}
+                  `}
+                >
+                  {option}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return rows;
+  };
+
+  // Distribute questions across columns
+  const renderColumns = () => {
+    const allQuestions = renderQuestionRows();
+    const columnGroups = [];
+    
+    for (let i = 0; i < columns; i++) {
+      const startIndex = i * questionsPerColumn;
+      const endIndex = Math.min(startIndex + questionsPerColumn, totalQuestions);
+      const columnQuestions = allQuestions.slice(startIndex, endIndex);
+      
+      columnGroups.push(
+        <div key={i} className="border-b sm:border-r border-red-500 last:border-b-0 sm:last:border-r-0 pb-2 sm:pb-0">
+          {columnQuestions}
+        </div>
+      );
+    }
+    
+    return columnGroups;
+  };
+  
   return (
     <div className="container mx-auto p-2 sm:p-4 md:p-6">
       <h2 className="text-center text-xl sm:text-2xl font-bold mb-4 sm:mb-6">OMR Answer Sheet</h2>
@@ -160,49 +215,16 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
         </div>
       </div>
       
-      {/* OMR Grid */}
-      <div className={`grid grid-cols-1 sm:grid-cols-${Math.min(columns, 2)} lg:grid-cols-${columns} gap-2 sm:gap-4 border border-red-500 p-2 sm:p-4 rounded-lg`}>
-        {[...Array(columns)].map((_, colIndex) => (
-          <div key={colIndex} className="border-b sm:border-b-0 sm:border-r border-red-500 last:border-b-0 sm:last:border-r-0 pb-2 sm:pb-0">
-            {Array.from({ length: questionsPerColumn }).map((_, rowIndex) => {
-              const qIndex = colIndex * questionsPerColumn + rowIndex;
-              
-              // Only render if question index is within total questions
-              if (qIndex >= totalQuestions) return null;
-              
-              const bgColor =
-                Math.floor(qIndex / 5) % 2 === 0 ? "bg-red-100" : "bg-white";
-                
-              return (
-                <div
-                  key={qIndex}
-                  className={`flex items-center p-1 sm:p-2 ${bgColor}`}
-                >
-                  <span className="font-bold text-red-600 mr-1 sm:mr-2 w-8 sm:w-12 text-xs sm:text-base">
-                    {String(qIndex + 1).padStart(3, "0")}
-                  </span>
-                  <div className="flex flex-1 justify-around">
-                    {["A", "B", "C", "D"].map((option) => (
-                      <div
-                        key={option}
-                        className="mx-0.5 sm:mx-1"
-                        onClick={() => handleOptionSelect(qIndex, option)}
-                      >
-                        <span
-                          className={`w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center border rounded-full cursor-pointer select-none text-xs sm:text-base
-                            ${answers[qIndex] === option ? "bg-red-500 text-white" : "border-red-500 hover:bg-red-200"}
-                          `}
-                        >
-                          {option}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ))}
+      {/* OMR Grid - Using fixed classes based on windowWidth */}
+      <div className={`
+        border border-red-500 p-2 sm:p-4 rounded-lg
+        ${windowWidth < 640 ? 'grid grid-cols-1' : 
+          windowWidth < 768 ? 'grid grid-cols-2' : 
+          windowWidth < 1024 ? 'grid grid-cols-3' : 
+          'grid grid-cols-4'}
+        gap-2 sm:gap-4
+      `}>
+        {renderColumns()}
       </div>
       
       {/* Button Group */}
@@ -225,7 +247,6 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
 };
 
 export default OMRForm;
-
 
 
 
