@@ -6,6 +6,7 @@ const OMRForm = ({ onSubmit }) => {
   const [answers, setAnswers] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Load from localStorage on first load
   useEffect(() => {
     const storedTotalQuestions = Number(localStorage.getItem("omrTotalQuestions"));
     const storedRollNumber = localStorage.getItem("omrRollNumber");
@@ -19,13 +20,14 @@ const OMRForm = ({ onSubmit }) => {
     }
   }, []);
 
+  // Save to localStorage whenever data changes
   useEffect(() => {
-    if (totalQuestions && rollNumber) {
+    if (isInitialized) {
       localStorage.setItem("omrTotalQuestions", totalQuestions);
       localStorage.setItem("omrRollNumber", rollNumber);
       localStorage.setItem("omrAnswers", JSON.stringify(answers));
     }
-  }, [totalQuestions, rollNumber, answers]);
+  }, [totalQuestions, rollNumber, answers, isInitialized]);
 
   const handleOptionSelect = (qIndex, option) => {
     setAnswers((prevAnswers) => {
@@ -35,13 +37,26 @@ const OMRForm = ({ onSubmit }) => {
     });
   };
 
+  const handleStart = () => {
+    if (!rollNumber || !totalQuestions) {
+      alert("Please enter both Roll Number and Number of Questions.");
+      return;
+    }
+    setAnswers(Array(Number(totalQuestions)).fill(null));
+    setIsInitialized(true);
+  };
+
   const handleSubmit = () => {
     if (!rollNumber || !totalQuestions) {
       alert("Please enter Roll Number and Number of Questions.");
       return;
     }
+
     console.log("Submitted Data:", { rollNumber, answers });
     onSubmit({ rollNumber, answers });
+
+    // Optionally clear localStorage after submission
+    // localStorage.clear();
   };
 
   if (!isInitialized) {
@@ -52,21 +67,19 @@ const OMRForm = ({ onSubmit }) => {
           type="text"
           className="block w-1/2 mx-auto p-2 border rounded-lg focus:ring-2 focus:ring-red-500"
           placeholder="Enter Roll Number"
+          value={rollNumber || ""}
           onChange={(e) => setRollNumber(e.target.value)}
         />
         <input
           type="number"
           className="block w-1/2 mx-auto p-2 border rounded-lg mt-4 focus:ring-2 focus:ring-red-500"
           placeholder="Enter Number of Questions"
-          onChange={(e) => {
-            const num = Number(e.target.value);
-            setTotalQuestions(num);
-            setAnswers(Array(num).fill(null));
-          }}
+          value={totalQuestions || ""}
+          onChange={(e) => setTotalQuestions(Number(e.target.value))}
         />
         <button
           className="mt-4 px-6 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600"
-          onClick={() => setIsInitialized(true)}
+          onClick={handleStart}
         >
           Start
         </button>
@@ -122,6 +135,7 @@ const OMRForm = ({ onSubmit }) => {
 };
 
 export default OMRForm;
+
 
 
 
