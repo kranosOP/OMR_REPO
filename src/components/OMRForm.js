@@ -118,7 +118,7 @@ const OMRForm = ({ onSubmit, initialQuestionCount = 100 }) => {
             {["A", "B", "C", "D"].map((option) => (
               <div
                 key={option}
-                className="mx-0.5 sm:mx-1"
+                className="mx-2 sm:mx-4" // Increased spacing here (was mx-0.5 sm:mx-1)
                 onClick={() => handleOptionSelect(i, option)}
               >
                 <span
